@@ -15,6 +15,7 @@ public:
 		const char *lib);
 
 	bool GetDetour(uint8_t *out, uint8_t *size);
+	bool GetNops(uint8_t *out, int8_t size);
 
 	const char *handler() const { return handler_; }
 	const char *library() const { return library_; }

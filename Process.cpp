@@ -634,10 +634,8 @@ bool Process::InsertHook(Hook *hook)
 	}
 	delete decoder;
 
-	if (save_amount > detour_size) {
-		LOG_ERROR("detour size is smaller then prolog bytes to save");
-		return false;
-	}
+	if (save_amount > detour_size)
+		LOG_INFO("detour size is smaller then prolog bytes to save");
 
 	/* use helper library to set the values for the array */
 	int32_t h_idx = -1, ret = -1;
@@ -660,9 +658,30 @@ bool Process::InsertHook(Hook *hook)
 		return false;
 	}
 
+	uint8_t padding = save_amount - detour_size;
+	if (padding % 2) {
+		LOG_ERROR("misaligned function prolog");
+		return false;
+	}
+
+	uint8_t nops[16];
+	if (padding && !hook->GetNops(nops, padding)) {
+		LOG_ERROR("failed to retrieve nops for padding");
+		return false;
+	}
+
+	/* write nop padding first (if required) */
+	if (padding && !WriteMemory((location & 0xfffffffe), nops, padding)) {
+		LOG_ERROR("couldn't write padding of size %d to 0x%08x",
+			padding, (location & 0xffffffe));
+		return false;
+	}
+
 	/* now overwrite the function prolog, mind alignment */
-	if (!WriteMemory((location & 0xfffffffe), detour, detour_size, true)) {
-		LOG_ERROR("couldn't write to memory at 0x%08x", location);
+	if (!WriteMemory((location & 0xfffffffe) + padding, detour,
+		detour_size, true)) {
+		LOG_ERROR("couldn't write to memory at 0x%08x",
+			(location & 0xffffffe) + padding);
 		return false;
 	}
 

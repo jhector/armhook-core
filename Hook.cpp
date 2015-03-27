@@ -21,6 +21,13 @@ uint8_t kThumbDetour[] = {
 	0x80, 0x47, /* blx r0 */
 };
 
+uint8_t kThumbNops[] = {
+	0x00, 0x1c, /* mov r0, r0 */
+	0x00, 0x1c, /* mov r0, r0 */
+	0x00, 0x1c, /* mov r0, r0 */
+	0x00, 0x1c, /* mov r0, r0 */
+};
+
 
 Hook::Hook(uint32_t abs, const char *handler, const char *lib)
 	: relative_(false)
@@ -55,6 +62,24 @@ bool Hook::GetDetour(uint8_t *out, uint8_t *size)
 	case 0:
 		memcpy((void*)out, kArmDetour, sizeof(kArmDetour));
 		*size = sizeof(kArmDetour);
+		break;
+	}
+
+	return true;
+}
+
+bool Hook::GetNops(uint8_t *out, int8_t size)
+{
+	switch (location_ & 1) {
+	case 1:
+		if (size > sizeof(kThumbNops))
+			size = sizeof(kThumbNops);
+
+		memcpy((void*)out, kThumbNops, size);
+		break;
+	case 0:
+		LOG_WARN("ARM nop instruction currently not present");
+		return false;
 		break;
 	}
 
