@@ -648,16 +648,6 @@ bool Process::InsertHook(Hook *hook)
 		return false;
 	}
 
-	/* make segment writable to insert detour stub */
-	int32_t out = -1;
-	PCALL(this, mprotect, (uint32_t*)&out, seg->start,
-		seg->end - seg->start, seg->prot | PROT_WRITE);
-
-	if (out != 0) {
-		LOG_ERROR("mprotect() segment 0x%08x failed", seg->start);
-		return false;
-	}
-
 	uint8_t padding = save_amount - detour_size;
 	if (padding % 2) {
 		LOG_ERROR("misaligned function prolog");
@@ -685,15 +675,6 @@ bool Process::InsertHook(Hook *hook)
 		return false;
 	}
 
-	/* restore original segment protections */
-	PCALL(this, mprotect, (uint32_t*)&out, seg->start,
-		seg->end - seg->start, seg->prot);
-
-	if (out != 0) {
-		LOG_ERROR("failed to restore original segment protection");
-		return false;
-	}
-
 	LOG_INFO("address: 0x%08x hooked with detour handler: %s",
 		location, hook->handler());
 
@@ -701,6 +682,7 @@ bool Process::InsertHook(Hook *hook)
 	args[0] = seg->start;
 	args[1] = seg->end;
 
+	int32_t out = -1;
 	LOG_EXEC_FAIL(p_clearcache, args, 2, &dummy);
 	LOG_DEBUG("cache cleared for hook");
 
