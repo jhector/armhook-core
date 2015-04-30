@@ -203,7 +203,7 @@ bool SharedObject::MapSegments(Process *proc)
 
 	uint32_t fd = -1;
 	PCALL(proc, open, (uint32_t*)&fd, name_addr, O_RDONLY, 0);
-	if (fd < 0) {
+	if ((int32_t)fd < 0) {
 		LOG_ERROR("process couldn't open library: %d", fd);
 		return false;
 	}
@@ -256,12 +256,6 @@ bool SharedObject::MapSegments(Process *proc)
 
 bool SharedObject::LinkObject(Process *proc)
 {
-	/* if we have relocations in the .text section, make sure it is +w */
-	if (textrel_ && !RemapSegments(proc, true)) {
-		LOG_ERROR("failed to add write permissions for segments");
-		return false;
-	}
-
 	if (plt_rel_) {
 		if (!FixRelocations(proc, plt_rel_, num_plt_rel_)) {
 			LOG_ERROR("failed to do DT_JMPREL relocations");
@@ -274,12 +268,6 @@ bool SharedObject::LinkObject(Process *proc)
 			LOG_ERROR("failed to do DT_REL relocations");
 			return false;
 		}
-	}
-
-	/* restore original segment protection */
-	if (textrel_ && !RemapSegments(proc)) {
-		LOG_ERROR("failed to restore original segment permissions");
-		return false;
 	}
 
 	if (!ProtectRelocations(proc)) {
@@ -413,7 +401,7 @@ bool SharedObject::ProtectRelocations(Process *proc)
 			PCALL(proc, mprotect, &dummy, start, end - start,
 				PROT_READ);
 
-			if (dummy < 0)
+			if ((int32_t)dummy < 0)
 				LOG_WARN("failed to mprotect relocations at:" \
 					"0x%08x", start);
 		}
