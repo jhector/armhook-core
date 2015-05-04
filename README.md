@@ -5,6 +5,9 @@ Core of Linux hooking engine for ARM architecture
 The engine contains a linker which is used to inject a shared library into a given process.
 It provides minimal functionality and uses `ptrace` to load and link the library in the target process.
 
+The implemented linker can't inject a library whose dependancies are not already present in the target process memory.
+Kepp that in mind when developing your hook handlers.
+
 ## Hook Mechanism
 A **trampoline** is used as an intermediate stop for each hook. It finds the correct hook handler based on the return address given by the `lr` register when the **trampoline** is called. 
 
