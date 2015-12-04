@@ -2,9 +2,11 @@
 
 #include <cstdio>
 
+#if 0
 #ifdef __ANDROID__
 #define dprintf fdprintf
 #define vdprintf vfdprintf
+#endif
 #endif
 
 using namespace armhook;

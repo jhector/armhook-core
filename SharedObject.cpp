@@ -185,13 +185,15 @@ bool SharedObject::ReserveMemory(Process *proc)
 bool SharedObject::MapSegments(Process *proc)
 {
 	/* we need an open file descriptor for the library in the process */
-	uint32_t name_addr = 0;
-	PCALL(proc, malloc, &name_addr, full_path_.length());
+	uint32_t name_addr = 0, dummy = 0;
+	PCALL(proc, malloc, &name_addr, full_path_.length()+1);
 
 	if (!name_addr) {
 		LOG_ERROR("couldn't allocate memory inside the process");
 		return false;
 	}
+
+	PCALL(proc, memset, &dummy, name_addr, 0x0, full_path_.length()+1);
 
 	/* wrtie the path into the allocated memory in the process */
 	if (!proc->WriteMemory(name_addr, full_path_.c_str(),

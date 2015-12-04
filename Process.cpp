@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <stdint.h>
 #include <elf.h>
+#include <signal.h>
 
 #include <cstdio>
 #include <cstdlib>
@@ -240,14 +241,16 @@ bool Process::Run(int *status)
 	if (!attached_)
 		return false;
 
-	if (ptrace(PTRACE_CONT, pid_, NULL, NULL) < 0) {
-		int err = errno;
-		LOG_ERROR("PTRACE_CONT with pid %d failed: %s",
-			pid_, strerror(err));
-		return false;
-	}
+	while (!sig || sig == SIGSYS) {
+		if (ptrace(PTRACE_CONT, pid_, NULL, sig) < 0) {
+			int err = errno;
+			LOG_ERROR("PTRACE_CONT with pid %d failed: %s",
+					pid_, strerror(err));
+			return false;
+		}
 
-	Wait(&sig);
+		Wait(&sig);
+	}
 
 	if (status)
 		*status = sig;
