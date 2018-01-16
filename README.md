@@ -24,7 +24,7 @@ struct hook_data {
 typedef int8_t (*hook_handler)(struct hook_data*);
 ```
 
-The orginal function prolog is saved and used when the handler returns `1` meaning that the original function should be continued. To modify the arguments to the original function, it is only required to modify the fields inside the argument struct.
+The orginal function prolog is saved and used when the handler returns `0` meaning that the original function should be continued. To modify the arguments to the original function, it is only required to modify the fields inside the argument struct.
 The **trampoline** will restore the register content based on the values given in the struct before executing the saved prolog.
 
 Due to the changed location of the prolog instructions, continuation of the original function may not work properly.
